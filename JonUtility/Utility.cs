@@ -116,7 +116,7 @@
             return returnColor;
         }
 
-        public static T NewControl<T>(Control parent, string text, int left, int top, int width = -1, int height = -1) where T : Control
+        public static T NewControl<T>(Control parent, string text, int left, int top, int width = -1, int height = -1) where T : Control, new()
         {
             T newControl = Activator.CreateInstance<T>();
             newControl.Parent = parent;
@@ -132,10 +132,6 @@
             return newControl;
         }
 
-        public static void CenterForm(this Form frm, int width, int height)
-        {
-            frm.SetBounds((int)((Screen.PrimaryScreen.WorkingArea.Width - width) / 2), (int)((Screen.PrimaryScreen.WorkingArea.Height - height) / 2), width, height);
-        }
     }
 
     public static class Serialization
@@ -537,6 +533,30 @@
             WriteLineMethod("   Slowest time: " + JonUtility.Utility.TicksToMS(slowestTime, 4));
         }
 
+        public static int GetRandomNumber(int minInclusive, int maxExclusive)
+        {
+            return rand.Next(minInclusive, maxExclusive);
+        }
+
+        /// <summary>
+        /// Returns a random number between 0 and 1, with the specified number of digits between 1 and 9 (defaults to 2)
+        /// </summary>
+        /// <param name="digits"></param>
+        /// <returns>The number of digit places in the return value, between 1 and 9 (defaults to 2).</returns>
+        public static double GetRandomDouble(int digits = 2)
+        {
+            if (digits < 1)
+            {
+                digits = 1;
+            }
+            else if ( digits > 9)
+            {
+                digits = 9;
+            }
+            double max = Math.Pow(10, digits);        
+            return rand.Next(0, (int)max + 1) / max;
+        }
+
         public static string GetRandomString(int minLength, int maxLength = -1)
         {
             if (minLength <= 0) return string.Empty;
@@ -900,6 +920,39 @@
             {
                 if (ptr != IntPtr.Zero) Marshal.ZeroFreeGlobalAllocUnicode(ptr);
             }
+        }
+        
+        public static void CenterForm(this Form @this, int width, int height)
+        {
+            @this.SetBounds((int)((Screen.PrimaryScreen.WorkingArea.Width - width) / 2), (int)((Screen.PrimaryScreen.WorkingArea.Height - height) / 2), width, height);
+        }
+
+        public static string InsertReplace(this string @this, int insertionIndex, int deletionCount, string textToInsert)
+        {
+            @this = @this.Remove(insertionIndex, deletionCount);
+            @this = @this.Insert(insertionIndex, textToInsert);         
+            return @this;
+        }
+
+        public static bool IsNaNorInfinity(this Double @this)
+        {
+            return Double.IsNaN(@this) || Double.IsInfinity(@this);
+        }
+
+        public static void TraceError(this TraceSource @this, Exception ex)
+        {
+            string data;
+            if (ex is AggregateException)
+            {
+                var errors = from error in ((AggregateException)ex).Flatten().InnerExceptions
+                             select error.GetType().Name + ": " + error.Message;
+                data = string.Join(Environment.NewLine, errors);
+            }
+            else
+            {
+                data = ex.Message;
+            }
+            @this.TraceData(TraceEventType.Error, 0, data);
         }
     }
 }
