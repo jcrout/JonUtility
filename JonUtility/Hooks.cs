@@ -7,6 +7,11 @@ namespace JonUtility
     using System.Runtime.InteropServices;
     using System.Windows.Forms;
 
+    /// <summary>
+    ///     Provides mouse and keyboard hooks. Obtained here:
+    ///     http://stackoverflow.com/questions/27133957/global-mouse-hook-in-wpf-c-sharp,
+    ///     https://www.dropbox.com/s/v05e8kc0vogwla5/UserActivityHook.cs?dl=0
+    /// </summary>
     public class UserActivityHook
     {
         /// <summary>
