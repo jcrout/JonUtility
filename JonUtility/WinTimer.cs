@@ -45,12 +45,19 @@ namespace JonUtility
 
         private delegate void TimerEventHandler(int id, int msg, IntPtr user, int dw1, int dw2);
 
+        /// <summary>
+        ///     Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources. Stops the
+        ///     timer.
+        /// </summary>
         public void Dispose()
         {
             this.OnDispose(true);
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        ///     Starts the timer.
+        /// </summary>
         public void Start()
         {
             this.stopRequested = false;
@@ -63,6 +70,13 @@ namespace JonUtility
                 WinTimer.EVENT_TYPE);
         }
 
+        /// <summary>
+        ///     Stops the timer.
+        /// </summary>
+        /// <remarks>
+        ///     If a stop request has already been issued, then this method simply returns. This method is called on
+        ///     <see cref="Dispose" />.
+        /// </remarks>
         public void Stop()
         {
             if (this.stopRequested)

@@ -11,8 +11,8 @@
         ///     parameters.
         /// </summary>
         /// <typeparam name="T">
-        ///     The type of <see cref="Control" /> to create. It
-        ///     must inherit from <see cref="Control" /> and have a
+        ///     The type of <see cref="Control" /> to create. It must inherit
+        ///     from <see cref="Control" /> and have a
         ///     parameterless-constructor.
         /// </typeparam>
         /// <param name="parent">
@@ -26,18 +26,18 @@
         ///     The new <see cref="Control" />'s Y coordinate.
         /// </param>
         /// <param name="text">
-        ///     The text value for the new <see cref="Control" />.
-        ///     This value can be null or empty.
+        ///     The text value for the new <see cref="Control" />. This value
+        ///     can be null or empty.
         /// </param>
         /// <param name="width">
-        ///     The new <see cref="Control" />'s width. If a
-        ///     value below 0 is specified for either the width or height, this size
-        ///     parameters are ignored.
+        ///     The new <see cref="Control" />'s width. If a value below 0 is
+        ///     specified for either the width or height, this size parameters
+        ///     are ignored.
         /// </param>
         /// <param name="height">
-        ///     The new <see cref="Control" />'s height. If a
-        ///     value below 0 is specified for either the width or height, this size
-        ///     parameters are ignored.
+        ///     The new <see cref="Control" />'s height. If a value below 0 is
+        ///     specified for either the width or height, this size parameters
+        ///     are ignored.
         /// </param>
         /// <returns>T.</returns>
         public static T NewControl<T>(Control parent, int left, int top, string text, int width, int height)

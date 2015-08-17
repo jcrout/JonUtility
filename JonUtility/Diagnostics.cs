@@ -1,8 +1,6 @@
 ﻿namespace JonUtility
 {
     using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
     using System.Reflection;
     using System.Runtime.CompilerServices;
@@ -10,6 +8,10 @@
     using System.Text;
     using SF = StringFunctions;
 
+    /// <summary>
+    ///     Provides static methods for benchmarking and providing generated
+    ///     input for testing.
+    /// </summary>
     public static class Diagnostics
     {
         private static readonly Random rand = new Random();
@@ -20,15 +22,16 @@
         public static void BenchmarkMethod(Action a, int Count, bool PrepareDelegate = true,
             Action<string> WriteLineMethod = null)
         {
-            // (Action<string>)typeof(Console).GetMethod("WriteLine", BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(string) }, null).CreateDelegate(typeof(Action<string>))
             if (WriteLineMethod == null)
             {
                 WriteLineMethod = s => Console.WriteLine(s);
             }
+
             if (Count < 1)
             {
                 return;
             }
+
             if (PrepareDelegate)
             {
                 RuntimeHelpers.PrepareDelegate(a);
@@ -168,268 +171,7 @@
             return strings;
         }
 
-        public static byte[] RawSerialize(object obj)
-        {
-            int rawsize = Marshal.SizeOf(obj);
-            IntPtr buffer = Marshal.AllocHGlobal(rawsize);
-            Marshal.StructureToPtr(obj, buffer, false);
-            byte[] rawdata = new byte[rawsize];
-            Marshal.Copy(buffer, rawdata, 0, rawsize);
-            Marshal.FreeHGlobal(buffer);
-            return rawdata;
-        }
-
-        public static void StructAnalyzer(ValueType Struct)
-        {
-            Type T = Struct.GetType();
-            Trace.WriteLine("Analyzing struct " + T.Name + ": " + Struct);
-            Trace.Indent();
-
-            StructLayoutAttribute sla = T.StructLayoutAttribute;
-            bool autoLayout = false;
-            if (sla != null)
-            {
-                autoLayout = sla.Value.HasFlag(LayoutKind.Auto);
-                Trace.WriteLine(
-                    string.Format("StructLayout = {0}, Pack = {1}, Size = {2}", sla.Value, sla.Pack, sla.Size));
-            }
-            if (!autoLayout)
-            {
-                Trace.WriteLine(string.Format("Size: {0}", Marshal.SizeOf(T)));
-            }
-
-            FieldInfo[] fields = T.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            foreach (var field in fields)
-            {
-                string accessor = field.IsPublic ? "public" : "private";
-                Trace.WriteLine(string.Format("{0} {1} {2}", accessor, field.FieldType.Name, field.Name));
-                Trace.Indent();
-                var attributes = field.CustomAttributes;
-                var foa = attributes.FirstOrDefault(attr => attr.AttributeType == typeof(FieldOffsetAttribute));
-
-                if (foa != null)
-                {
-                    Trace.WriteLine(string.Format("[FieldOffset({0})]", foa.ConstructorArguments[0].Value));
-                }
-                if (!autoLayout)
-                {
-                    Trace.WriteLine(string.Format("Offset: {0}", Marshal.OffsetOf(T, field.Name).ToInt64()));
-                }
-
-                Trace.Unindent();
-            }
-
-            Trace.Unindent();
-        }
-
-        public static void PrintValues(object obj, Action<string> WriteMethod = null)
-        {
-            _PrintValues pv = new _PrintValues(obj, WriteMethod);
-            pv.Start();
-        }
-
         [DllImport("Kernel32.dll")]
         private static extern bool QueryPerformanceFrequency(out long lpFrequency);
-
-        private class _PrintValues
-        {
-            private static readonly Action<string> defaultWriteMethod;
-            private readonly List<Tuple<string, object>> CheckedProperties = new List<Tuple<string, object>>(20);
-            private readonly object Original;
-            private readonly Action<string> WriteMethod;
-
-            static _PrintValues()
-            {
-                _PrintValues.defaultWriteMethod =
-                    (Action<string>)
-                        typeof(Console).GetMethod(
-                            "WriteLine",
-                            BindingFlags.Public | BindingFlags.Static,
-                            null,
-                            new Type[1] {typeof(string)},
-                            null).CreateDelegate(typeof(Action<string>), null);
-            }
-
-            public _PrintValues(object original, Action<string> writeMethod)
-            {
-                this.Original = original;
-                this.WriteMethod = writeMethod ?? _PrintValues.defaultWriteMethod;
-            }
-
-            public void Start()
-            {
-                this.WriteMethod("Analyzing " + this.Original.GetType().Name + " " + this.Original);
-                try
-                {
-                    this.PrintValues(this.Original, "");
-                }
-                catch (Exception ex)
-                {
-                    this.WriteMethod("Error: " + ex.Message);
-                }
-            }
-
-            private void PrintValues(object obj, string indent)
-            {
-                Type T = obj.GetType();
-
-                Tuple<string, MemberInfo[]>[] members = new Tuple<string, MemberInfo[]>[3];
-                members[0] = new Tuple<string, MemberInfo[]>(
-                    "Public Properties:",
-                    T.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                     .Where(pi => pi.GetIndexParameters().Length == 0)
-                     .ToArray<MemberInfo>());
-                members[1] = new Tuple<string, MemberInfo[]>(
-                    "Public Fields:",
-                    T.GetFields(BindingFlags.Public | BindingFlags.Instance));
-                members[2] = new Tuple<string, MemberInfo[]>(
-                    "Private Fields:",
-                    T.GetFields(BindingFlags.NonPublic | BindingFlags.Instance));
-
-                int count = members.Sum(list => list.Item2.Length) + members.Length;
-                string indent1 = indent + "   ";
-                string indent2 = indent1 + "   ";
-
-                //StringBuilder sb = new StringBuilder();
-                foreach (var minfo in members)
-                {
-                    if (minfo.Item2.Length == 0)
-                    {
-                        continue;
-                    }
-                    this.WriteMethod(indent1 + minfo.Item1);
-                    int length = minfo.Item2.Max(mi => mi.Name.Length);
-
-                    for (int i = 0; i < minfo.Item2.Length; i++)
-                    {
-                        MemberInfo member = minfo.Item2[i];
-                        Type memType = (member.MemberType == MemberTypes.Property)
-                            ? ((PropertyInfo)member).PropertyType
-                            : ((FieldInfo)member).FieldType;
-                        string memPrefix = member.Name + " {" + memType.Name + "}";
-
-                        object value;
-                        try
-                        {
-                            value = ((dynamic)member).GetValue(obj);
-                            this.ProcessValue(member, value, indent2, memPrefix);
-                        }
-                        catch (Exception ex)
-                        {
-                            this.WriteMethod(indent2 + memPrefix + ": threw Exception of type " + ex.GetType().Name);
-                        }
-                    }
-                }
-            }
-
-            private void ProcessArray(MemberInfo member, dynamic array, string indent, string indexString = "")
-            {
-                Func<int, int[]> GetIndices = null;
-                int length = array.Length;
-                int rank = array.Rank;
-                if (rank > 1)
-                {
-                    int[] sums = null;
-                    int sum = 1;
-                    sums = new int[rank];
-                    for (int i = rank - 1, i2 = 0; i > 0; i--, i2++)
-                    {
-                        sum *= (array.GetUpperBound(i) + 1);
-                        sums[i] = sum;
-                    }
-                    GetIndices = (x =>
-                    {
-                        int[] indices = new int[rank];
-                        double temp = x;
-                        for (int i2 = 0; i2 < rank - 1; i2++)
-                        {
-                            indices[i2] = (int)Math.Floor(temp / sums[i2 + 1]);
-                            if (indices[i2] > 0)
-                            {
-                                temp -= indices[i2] * sums[i2 + 1];
-                            }
-                        }
-                        indices[rank - 1] = x % sums[rank - 1];
-                        return indices;
-                    });
-                }
-
-                object o = null;
-                string val;
-                for (int i = 0; i < length; i++)
-                {
-                    if (rank == 1)
-                    {
-                        o = array[i];
-                        val = i.ToString();
-                    }
-                    else
-                    {
-                        int[] indices = GetIndices(i);
-                        val = string.Join(",", indices.Take(rank - 1)) + "," + indices[rank - 1];
-                        o = array.GetValue(indices);
-                    }
-
-                    if (o == null)
-                    {
-                        this.WriteMethod(indent + indexString + val + ": null");
-                    }
-                    else
-                    {
-                        Type T = o.GetType();
-                        if (!T.IsArray)
-                        {
-                            this.ProcessValue(member, o, indent, indexString + val);
-                        }
-                        else
-                        {
-                            string newIndex = indexString + val + ",";
-                            ProcessArray(member: member, array: (dynamic)o, indent: indent, indexString: newIndex);
-                        }
-                    }
-                }
-            }
-
-            private void ProcessValue(MemberInfo member, object value, string indent, string prefix)
-            {
-                if (value == null)
-                {
-                    this.WriteMethod(indent + prefix + ": null");
-                    return;
-                }
-
-                if (value is string)
-                {
-                    this.WriteMethod(indent + prefix + ": " + value);
-                    return;
-                }
-
-                Type T2 = value.GetType();
-                if (T2.IsPrimitive)
-                {
-                    this.WriteMethod(indent + prefix + ": " + value);
-                    return;
-                }
-
-                Tuple<string, object> lolzo;
-                if ((lolzo = this.CheckedProperties.FirstOrDefault(x => x.Item2 == value)) != null)
-                {
-                    this.WriteMethod(indent + prefix + ": see " + lolzo.Item1 + " property.");
-                    return;
-                }
-
-                if (T2.IsArray)
-                {
-                    this.WriteMethod(indent + prefix + ": array");
-                    ProcessArray(member: member, array: (dynamic)value, indent: indent + "   ", indexString: "");
-                    this.CheckedProperties.Add(new Tuple<string, object>(member.Name, value));
-                    return;
-                }
-
-                this.WriteMethod(indent + prefix + ": " + value);
-                this.PrintValues(value, indent);
-                this.CheckedProperties.Add(new Tuple<string, object>(member.Name, value));
-            }
-        }
     }
 }

@@ -13,8 +13,8 @@
         ///     work with Color.FromName, which expects an enum name).
         /// </summary>
         /// <param name="name">
-        ///     The name of the color, as a 4-digit hex string or
-        ///     common/enum name.
+        ///     The name of the color, as a 4-digit hex string or common/enum
+        ///     name.
         /// </param>
         /// <returns></returns>
         public static Color ToColor(this string @this)

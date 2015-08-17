@@ -43,6 +43,19 @@ namespace JonUtility
             }
         }
 
+        /// <summary>
+        ///     Removes a substring from the string and inserts a new string at
+        ///     the same index.
+        /// </summary>
+        /// <param name="this">The string instance.</param>
+        /// <param name="insertionIndex">
+        ///     Index of the insertion/deletion point.
+        /// </param>
+        /// <param name="deletionCount">
+        ///     The number of characters to delete.
+        /// </param>
+        /// <param name="textToInsert">The text to insert.</param>
+        /// <returns>System.String.</returns>
         public static string InsertReplace(this string @this, int insertionIndex, int deletionCount, string textToInsert)
         {
             @this = @this.Remove(insertionIndex, deletionCount);
@@ -68,9 +81,16 @@ namespace JonUtility
             {
                 data = ex.Message;
             }
+
             @this.TraceData(TraceEventType.Error, 0, data);
         }
 
+        /// <summary>
+        ///     Raises the event in a thread-safe manner and checks for a null event. Uses <see cref="EventArgs.Empty" /> in the
+        ///     invocation.
+        /// </summary>
+        /// <param name="this">The <see cref="EventHandler" /> instance.</param>
+        /// <param name="sender">The sender of the event.</param>
         public static void SafeRaise(this EventHandler @this, object sender)
         {
             if (@this != null)
@@ -79,6 +99,12 @@ namespace JonUtility
             }
         }
 
+        /// <summary>
+        ///     Raises the event in a thread-safe manner and checks for a null event.
+        /// </summary>
+        /// <param name="this">The <see cref="EventHandler" /> instance.</param>
+        /// <param name="sender">The sender of the event.</param>
+        /// <param name="eventArgs">The <see cref="EventArgs" /> instance to use during invocation.</param>
         public static void SafeRaise(this EventHandler @this, object sender, EventArgs eventArgs)
         {
             if (@this != null)
@@ -87,6 +113,13 @@ namespace JonUtility
             }
         }
 
+        /// <summary>
+        ///     Raises the event in a thread-safe manner and checks for a null event.
+        /// </summary>
+        /// <typeparam name="T">The type of the <see cref="EventArgs" />.</typeparam>
+        /// <param name="this">The <see cref="EventHandler" /> instance.</param>
+        /// <param name="sender">The sender of the event.</param>
+        /// <param name="eventArgs">The <see cref="EventArgs" /> instance to use during invocation.</param>
         public static void SafeRaise<T>(this EventHandler<T> @this, object sender, T eventArgs) where T : EventArgs
         {
             if (@this != null)
@@ -95,6 +128,12 @@ namespace JonUtility
             }
         }
 
+        /// <summary>
+        ///     Raises the event in a thread-safe manner and checks for a null event.
+        /// </summary>
+        /// <param name="this">The <see cref="PropertyChangedEventHandler" /> instance.</param>
+        /// <param name="sender">The sender of the event.</param>
+        /// <param name="eventArgs">The <see cref="PropertyChangedEventArgs" /> instance to use during invocation.</param>
         public static void SafeRaise(this PropertyChangedEventHandler @this, object sender, PropertyChangedEventArgs eventArgs)
         {
             if (@this != null)
@@ -103,6 +142,11 @@ namespace JonUtility
             }
         }
 
+        /// <summary>
+        ///     Gets the default value of the <see cref="Type" />.
+        /// </summary>
+        /// <param name="this">The this.</param>
+        /// <returns>the default{T} value for a value type; otherwise, null for a reference type</returns>
         public static object GetDefaultValue(this Type @this)
         {
             if (@this.IsValueType)

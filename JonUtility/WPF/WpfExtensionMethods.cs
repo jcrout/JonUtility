@@ -80,14 +80,14 @@
             return Color.FromArgb(alpha, @this.R, @this.G, @this.B);
         }
 
-        public static RenderTargetBitmap ConvertToBitmap(UIElement uiElement, double resolution)
+        public static RenderTargetBitmap ConvertToBitmap(this UIElement @this, double resolution)
         {
             var scale = resolution / 96d;
 
-            uiElement.Measure(new Size(Double.PositiveInfinity, Double.PositiveInfinity));
-            var sz = uiElement.DesiredSize;
+            @this.Measure(new Size(Double.PositiveInfinity, Double.PositiveInfinity));
+            var sz = @this.DesiredSize;
             var rect = new Rect(sz);
-            uiElement.Arrange(rect);
+            @this.Arrange(rect);
 
             var bmp = new RenderTargetBitmap(
                 (int)(scale * (rect.Width)),
@@ -95,14 +95,14 @@
                 scale * 96,
                 scale * 96,
                 PixelFormats.Default);
-            bmp.Render(uiElement);
+            bmp.Render(@this);
 
             return bmp;
         }
 
         public static void ConvertToJpeg(UIElement uiElement, string path, double resolution)
         {
-            var jpegString = WpfExtensionMethods.CreateJpeg(WpfExtensionMethods.ConvertToBitmap(uiElement, resolution));
+            var jpegString = WpfExtensionMethods.CreateJpeg(uiElement.ConvertToBitmap(resolution));
 
             if (path != null)
             {
@@ -199,8 +199,7 @@
         /// </returns>
         /// <exception cref="System.ArgumentNullException">@this</exception>
         /// <exception cref="System.FormatException">
-        ///     Input string was not in a
-        ///     correct format.
+        ///     Input string was not in a correct format.
         /// </exception>
         public static Color ToColorARGB(this string @this)
         {

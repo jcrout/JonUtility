@@ -3,11 +3,12 @@ namespace JonUtility.WPF
     using System;
     using System.Security;
     using System.Windows;
+    using System.Windows.Media;
     using System.Windows.Media.Imaging;
 
     /// <summary>
-    ///     Proxy class for a <see cref="WriteableBitmap" /> instance. Drawing is
-    ///     thread-safe provided that the <see cref="WriteableBitmap" /> is
+    ///     Proxy class for a <see cref="WriteableBitmap" /> instance. Drawing
+    ///     is thread-safe provided that the <see cref="WriteableBitmap" /> is
     ///     locked.
     /// </summary>
     [SecurityCritical]
@@ -150,6 +151,38 @@ namespace JonUtility.WPF
             }
         }
 
+        [SecurityCritical]
+        public void DrawRectangle(Brush brush, Int32Rect rect)
+        {
+            var drawBrush = brush;
+            if (drawBrush == null)
+            {
+                throw new ArgumentNullException(nameof(brush));
+            }
+
+            if (drawBrush is SolidColorBrush)
+            {
+                this.DrawRectangleSolidColorBrush2((SolidColorBrush)drawBrush, rect);
+            }
+            else if (drawBrush is LinearGradientBrush)
+            {
+                this.DrawRectangleLinearGradientBrush((LinearGradientBrush)drawBrush, rect);
+            }
+        }
+
+        public Color GetPixel(int x, int y)
+        {
+            int drawtop = this.BackBufferStride * y;
+            int drawLeft = drawtop + (x * this.bytesPerPixel);
+
+            unsafe
+            {
+                byte* buffer = (byte*)this.BackBuffer + drawLeft;
+
+                return Color.FromArgb(buffer[3], buffer[2], buffer[1], buffer[0]);
+            }
+        }
+
         public void Lock()
         {
             this.bitmap.Lock();
@@ -158,6 +191,143 @@ namespace JonUtility.WPF
         public void Unlock()
         {
             this.bitmap.Unlock();
+        }
+
+        [SecurityCritical]
+        private void DrawRectangleLinearGradientBrush(LinearGradientBrush brush, Int32Rect rect)
+        {
+            var stops = brush.GradientStops;
+            var stopCount = stops.Count;
+            for (int i = 0; i < stopCount; i++)
+            {
+                var gradientStop = stops[i];
+                var offset = gradientStop.Offset;
+            }
+        }
+
+        // bgra32
+        [SecurityCritical]
+        private void DrawRectangleSolidColorBrush(SolidColorBrush brush, Int32Rect rect)
+        {
+            var brushColor = brush.Color;
+            int color = BitConverter.ToInt32(new byte[4] {brushColor.B, brushColor.G, brushColor.R, brushColor.A}, 0);
+
+            int drawLeft = (this.PixelWidth * rect.Y) + rect.X;
+            int imageStride = rect.Width;
+            int count = rect.Width * rect.Height;
+            int distance = this.PixelWidth - rect.Width;
+
+            unsafe
+            {
+                int* bufferStart = (int*)this.BackBuffer + drawLeft;
+                int* buffer = bufferStart;
+                int widthEnd = rect.X + rect.Width;
+                int heightEnd = rect.Y + rect.Height;
+
+                for (int r = rect.X; r < widthEnd; r++)
+                {
+                    for (int c = rect.Y; c < heightEnd; c++)
+                    {
+                        *buffer = color;
+                        buffer++;
+                    }
+
+                    buffer += distance;
+                }
+            }
+        }
+
+        // bgra32
+        [SecurityCritical]
+        private void DrawRectangleSolidColorBrush2(SolidColorBrush brush, Int32Rect rect)
+        {
+            var brushToUse = brush;
+            if (brush == null)
+            {
+                return;
+            }
+
+            var brushColor = brushToUse.Color;
+            if (brushColor.A == 0)
+            {
+                return;
+            }
+
+            int drawLeft = (this.PixelWidth * rect.Y) + rect.X;
+            int imageStride = rect.Width;
+            int count = rect.Width * rect.Height;
+            int distance = this.PixelWidth - rect.Width;
+
+            unsafe
+            {
+                uint* bufferStart = (uint*)this.BackBuffer + drawLeft;
+                uint* buffer = bufferStart;
+                int widthEnd = rect.X + rect.Width;
+                int heightEnd = rect.Y + rect.Height;
+
+                if (brushColor.A == 255)
+                {
+                    uint color = (uint)(brushColor.B | brushColor.G << 8 | brushColor.R << 16 | brushColor.A << 24);
+
+                    if (!BitConverter.IsLittleEndian)
+                    {
+                        color = (uint)(brushColor.A | brushColor.R << 8 | brushColor.G << 16 | brushColor.B << 24);
+                    }
+
+                    for (int r = rect.X; r < widthEnd; r++)
+                    {
+                        for (int c = rect.Y; c < heightEnd; c++)
+                        {
+                            *buffer = color;
+                            buffer++;
+                        }
+
+                        buffer += distance;
+                    }
+                }
+                else
+                {
+                    float alphaDst = brushColor.A / 255.0F;
+                    float alphaSrc = 1.0F - alphaDst;
+                    float dstA = 1.0f / 255f * brushColor.A;
+
+                    float destB = brushColor.B * alphaDst;
+                    float destG = brushColor.G * alphaDst;
+                    float destR = brushColor.R * alphaDst;
+
+                    for (int r = rect.X; r < widthEnd; r++)
+                    {
+                        for (int c = rect.Y; c < heightEnd; c++)
+                        {
+                            byte* tempBuffer = (byte*)buffer;
+
+                            if (tempBuffer[3] == 0)
+                            {
+                                tempBuffer[0] = (byte)destB;
+                                tempBuffer[1] = (byte)destG;
+                                tempBuffer[2] = (byte)destR;
+                                tempBuffer[3] = brushColor.A;
+                            }
+                            else
+                            {
+                                // displayColor = sourceColor × alpha / 255 + backgroundColor × (255-alpha) / 255
+
+                                float srcA = 1.0f / 255f * tempBuffer[3];
+                                float outA = (srcA + (dstA - dstA * srcA));
+
+                                tempBuffer[0] = (byte)(destB + (tempBuffer[0] * alphaSrc));
+                                tempBuffer[1] = (byte)(destG + (tempBuffer[1] * alphaSrc));
+                                tempBuffer[2] = (byte)(destR + (tempBuffer[2] * alphaSrc));
+                                tempBuffer[3] = (byte)(outA * 255);
+                            }
+
+                            buffer++;
+                        }
+
+                        buffer += distance;
+                    }
+                }
+            }
         }
     }
 }

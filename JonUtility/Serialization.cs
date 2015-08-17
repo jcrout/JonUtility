@@ -19,6 +19,10 @@ namespace JonUtility
     using Newtonsoft.Json.Schema;
     using Formatting = Newtonsoft.Json.Formatting;
 
+    /// <summary>
+    ///     Provides some static methods for serialization. Examples include
+    ///     serializing XML or JSON while validating against schemas.
+    /// </summary>
     public static class Serialization
     {
         public enum DataContractKind
@@ -269,8 +273,6 @@ namespace JonUtility
                 return;
             }
 
-            //objectToSeralize = new LolZo(5) { DerpoInt = 6664 };
-
             var type = objectToSeralize.GetType();
             var ctor = type.GetConstructor(
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
@@ -278,9 +280,9 @@ namespace JonUtility
                 Type.EmptyTypes,
                 null);
 
-            // error
             if (ctor == null)
             {
+                throw new ArgumentException("Error: " + nameof(objectToSeralize) + " must have a public empty contructor.");
             }
 
             var fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
@@ -302,10 +304,7 @@ namespace JonUtility
                 {
                     serializer.WriteObject(outputStream, value);
                 }
-
-                //writer.Write((char)20);
             }
-            // }
         }
 
         private static Action<S, T> CreateSetter<S, T>(FieldInfo field)
@@ -324,6 +323,7 @@ namespace JonUtility
                 gen.Emit(OpCodes.Ldarg_1);
                 gen.Emit(OpCodes.Stfld, field);
             }
+
             gen.Emit(OpCodes.Ret);
             return (Action<S, T>)setterMethod.CreateDelegate(typeof(Action<S, T>));
         }
@@ -484,25 +484,6 @@ namespace JonUtility
 
             [DataMember(Name = "Data")]
             public string SerializedString { get; set; }
-        }
-
-        private class LolZo
-        {
-            private int otherInt;
-
-            public LolZo(int nope)
-            {
-                this.Yeshkin = nope;
-                this.otherInt = nope * 2 + 1;
-            }
-
-            private LolZo()
-            {
-            }
-
-            public int DerpoInt { get; set; }
-
-            public int Yeshkin { get; }
         }
     }
 }

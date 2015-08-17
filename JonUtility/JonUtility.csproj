@@ -35,6 +35,7 @@
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <CodeAnalysisRuleSet>JonUtility.ruleset</CodeAnalysisRuleSet>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
@@ -70,7 +71,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ExtensionMethods.cs" />
-    <Compile Include="Hooks.cs" />
+    <Compile Include="UserActivityHook.cs" />
     <Compile Include="MathFunctions.cs" />
     <Compile Include="Point.cs" />
     <Compile Include="Requires.cs" />
@@ -78,7 +79,7 @@
     <Compile Include="StringFunctions.cs" />
     <Compile Include="Diagnostics.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="WinForms\ExtensionMethods.cs" />
+    <Compile Include="WinForms\WinFormsExtensionMethods.cs" />
     <Compile Include="WinForms\Utility.cs" />
     <Compile Include="WinTimer.cs" />
     <Compile Include="WPF\WpfExtensionMethods.cs" />
