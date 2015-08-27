@@ -173,5 +173,35 @@
 
         [DllImport("Kernel32.dll")]
         private static extern bool QueryPerformanceFrequency(out long lpFrequency);
+
+        public static void PrintValues(object objectToScan, Action<string> writeMethod = null)
+        {
+            if (objectToScan == null)
+            {
+                throw new ArgumentNullException(nameof(objectToScan));
+            }
+
+            if (writeMethod == null)
+            {
+                writeMethod = s => Console.WriteLine(s);
+            }
+
+            var type = objectToScan.GetType();
+            var properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+
+            writeMethod(String.Format("Printing values for {0}: {1}", type.Name, objectToScan.ToString()));
+            foreach (var prop in properties)
+            {
+                try
+                {
+                    object propValue = prop.GetValue(objectToScan);
+                    writeMethod(prop.Name + ": " + propValue.ToString());
+                }
+                catch (Exception ex)
+                {
+                    writeMethod(string.Format("{0}{1}: threw exception of type {2}", "    ", prop.Name, ex.GetType().FullName));
+                }
+            }
+        }
     }
 }

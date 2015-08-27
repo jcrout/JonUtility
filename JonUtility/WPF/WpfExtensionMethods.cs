@@ -1,12 +1,14 @@
 ﻿namespace JonUtility.WPF
 {
     using System;
+    using System.Diagnostics;
     using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Reflection;
     using System.Text;
     using System.Windows;
+    using System.Windows.Input;
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
 
@@ -21,14 +23,14 @@
                 "RemoveVisualChild",
                 BindingFlags.Instance | BindingFlags.NonPublic,
                 null,
-                new[] {typeof(Visual)},
+                new[] { typeof(Visual) },
                 null);
 
             WpfExtensionMethods.removeLogicalChildMethod = typeof(FrameworkElement).GetMethod(
                 "RemoveLogicalChild",
                 BindingFlags.Instance | BindingFlags.NonPublic,
                 null,
-                new[] {typeof(object)},
+                new[] { typeof(object) },
                 null);
         }
 
@@ -49,12 +51,12 @@
             {
                 if (WpfExtensionMethods.removeLogicalChildMethod != null)
                 {
-                    WpfExtensionMethods.removeLogicalChildMethod.Invoke(@this, new[] {child});
+                    WpfExtensionMethods.removeLogicalChildMethod.Invoke(@this, new[] { child });
                 }
 
                 if (WpfExtensionMethods.removeVisualChildMethod != null)
                 {
-                    WpfExtensionMethods.removeVisualChildMethod.Invoke(@this, new object[] {(Visual)child});
+                    WpfExtensionMethods.removeVisualChildMethod.Invoke(@this, new object[] { (Visual)child });
                 }
 
                 return true;
@@ -234,6 +236,29 @@
                 return 255;
             }
             return (byte)value;
+        }
+
+        /// <summary>
+        ///     Executes the target ICommand only if the ICommand instance is not null and if the CanExecute(parameter) method
+        ///     returns true.
+        /// </summary>
+        /// <param name="this">The ICommand to execute.</param>
+        /// <param name="parameter">
+        ///     The data to pass to the ICommand.CanExecute and ICommand.Execute methods.
+        ///     This parameter can be null if no data is needed.
+        /// </param>
+        [DebuggerStepThrough]
+        public static void ExecuteIfAbleTo(this ICommand @this, object parameter = null)
+        {
+            if (@this == null)
+            {
+                return;
+            }
+
+            if (@this.CanExecute(parameter))
+            {
+                @this.Execute(parameter);
+            }
         }
     }
 }

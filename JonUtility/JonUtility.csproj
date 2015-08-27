@@ -82,6 +82,8 @@
     <Compile Include="WinForms\WinFormsExtensionMethods.cs" />
     <Compile Include="WinForms\Utility.cs" />
     <Compile Include="WinTimer.cs" />
+    <Compile Include="WPF\Command.cs" />
+    <Compile Include="WPF\ViewModelBase.cs" />
     <Compile Include="WPF\WpfExtensionMethods.cs" />
     <Compile Include="WPF\ImageDrawingMode.cs" />
     <Compile Include="WPF\PixelData.cs" />
