@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
     using System.Linq.Expressions;
     using System.Reflection;
@@ -216,6 +217,12 @@
             return null;
         }
 
+        public static MvcHtmlString MultiLineEncode<T>(this HtmlHelper<T> @this, string text)
+        {
+            var output = HttpUtility.HtmlEncode(text).Replace(Environment.NewLine, @"<br />");
+            return new MvcHtmlString(output);
+        }
+
         private static Func<T, MvcHtmlString> GetPropertyExpression<T>(HtmlHelper<T> helper, PropertyInfo property, MethodInfo methodToUse, ParameterExpression modelParam, params Expression[] methodParameters)
         {
             var modelType = typeof(T);
@@ -235,6 +242,20 @@
             var labelExpression = (Func<T, MvcHtmlString>)Expression.Lambda(caller, modelParam).Compile();
 
             return labelExpression;
+        }
+
+        public static string RenderRazorViewToString(this Controller @this, string viewName, object model)
+        {
+            @this.ViewData.Model = model;
+            using (var sw = new StringWriter())
+            {
+                var viewResult = ViewEngines.Engines.FindPartialView(@this.ControllerContext, viewName);
+                var viewContext = new ViewContext(@this.ControllerContext, viewResult.View,
+                                             @this.ViewData, @this.TempData, sw);
+                viewResult.View.Render(viewContext, sw);
+                viewResult.ViewEngine.ReleaseView(@this.ControllerContext, viewResult.View);
+                return sw.GetStringBuilder().ToString();
+            }
         }
     }
 }

@@ -1,12 +1,25 @@
 ﻿namespace JonUtility.WinForms
 {
     using System;
+    using System.Collections.Generic;
     using System.Drawing;
     using System.Linq;
     using System.Windows.Forms;
 
     public static class WinFormsExtensionMethods
     {
+
+        public static List<object> ToList(this ComboBox.ObjectCollection @this)
+        {
+            var items = new List<object>();
+            foreach (var obj in @this)
+            {
+                items.Add(obj);
+            }
+
+            return items;
+        }
+
         /// <summary>
         ///     Use this to always return a Color from a Color's Name property,
         ///     including when the Color's Name is a 4-digit hex string (doesn't
@@ -36,9 +49,17 @@
             return returnColor;
         }
 
-        public static Control AddChild<T>(this Control @this, int left, int top, string text = "", int width = -1, int height = -1) where T : Control, new()
+        public static T AddChild<T>(this Control @this, int left, int top, string text = "", int width = -1, int height = -1) where T : Control, new()
         {
             return Utility.NewControl<T>(@this, left, top, text, width, height);
+        }
+
+        public static Label AddChildLabel(this Control @this, int left, int top, string text = "", int width = -1, int height = -1, ContentAlignment textAlign = ContentAlignment.TopLeft, BorderStyle borderStyle = BorderStyle.None)
+        {
+            var lbl = Utility.NewControl<Label>(@this, left, top, text, width, height);
+            lbl.TextAlign = textAlign;
+            lbl.BorderStyle = borderStyle;
+            return lbl;
         }
 
         public static void CenterForm(this Form @this, int width, int height)

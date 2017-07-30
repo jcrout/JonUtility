@@ -1,14 +1,69 @@
 namespace JonUtility
 {
     using System;
+    using System.Collections;
+    using System.Collections.Generic;
     using System.ComponentModel;
     using System.Diagnostics;
     using System.Linq;
     using System.Runtime.InteropServices;
     using System.Security;
+    using System.Web;
 
     public static class ExtensionMethods
     {
+        public static T Or<T>(this T @this, T other) where T : class
+        {
+            return @this != null ? @this : other;
+        }
+
+        public static DateTime ToDateFromLongStamp(this string @this)
+        {
+            return new DateTime(
+                Int32.Parse(@this.Substring(0, 4)),
+                Int32.Parse(@this.Substring(4, 2)),
+                Int32.Parse(@this.Substring(6, 2)),
+                Int32.Parse(@this.Substring(8, 2)),
+                Int32.Parse(@this.Substring(10, 2)),
+                Int32.Parse(@this.Substring(12, 2)));
+        }
+
+        public static string ToLongDateTimeStamp(this DateTime @this)
+        {
+            return @this.ToString("yyyyMMddHHmmss");
+        }
+
+        public static string AppendIfMissing(this string @this, string extra)
+        {
+            return @this != null ? (!@this.EndsWith(extra) ? @this + extra : @this) : null;
+        }
+
+        public static bool IsNullOrEmpty<T>(this IEnumerable<T> @this)
+        {
+            return @this == null || !@this.Any();
+        }
+
+        public static IEnumerable<T> AsEnumerable<T>(this IEnumerable @this)
+        {
+            var items = new List<T>();
+            foreach (var item in @this)
+            {
+                items.Add((T)item);
+            }
+
+            return items;
+        }
+
+        public static string Or(this string @this, string other)
+        {
+            return !String.IsNullOrEmpty(@this) ? @this : other;
+        }
+
+        public static string Left(this string @this, int count)
+        {
+            return !String.IsNullOrEmpty(@this) ? (@this.Length < count ? @this : @this.Substring(0, count)) : null;
+        }
+
         public static SecureString ConvertToSecureString(this string @this)
         {
             unsafe
@@ -66,6 +121,11 @@ namespace JonUtility
         public static bool IsNaNorInfinity(this Double @this)
         {
             return Double.IsNaN(@this) || Double.IsInfinity(@this);
+        }
+
+        public static bool IsNanInfinityOrZero(this Double @this)
+        {
+            return Double.IsNaN(@this) || Double.IsInfinity(@this) || @this == 0d;
         }
 
         public static void TraceError(this TraceSource @this, Exception ex)

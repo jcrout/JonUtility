@@ -26,18 +26,17 @@
         {
         }
 
-        protected void OnPropertyChanged([CallerMemberName] string prop = "")
+        protected void RaisePropertyChanged([CallerMemberName]string prop = "")
         {
-            if (string.IsNullOrWhiteSpace(prop))
+            if (String.IsNullOrEmpty(prop))
             {
                 return;
             }
 
-            var propChangedEvent = this.PropertyChanged;
-            if (propChangedEvent != null)
+            var propertyChanged = this.PropertyChanged;
+            if (propertyChanged != null)
             {
-                var propChangedEventArgs = new PropertyChangedEventArgs(prop);
-                propChangedEvent(this, propChangedEventArgs);
+                this.PropertyChanged(this, new PropertyChangedEventArgs(prop));
             }
         }
     }

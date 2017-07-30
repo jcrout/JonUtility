@@ -162,7 +162,7 @@ namespace JonUtility.WPF
 
             if (drawBrush is SolidColorBrush)
             {
-                this.DrawRectangleSolidColorBrush2((SolidColorBrush)drawBrush, rect);
+                this.DrawRectangleSolidColorBrush((SolidColorBrush)drawBrush, rect);
             }
             else if (drawBrush is LinearGradientBrush)
             {
@@ -204,42 +204,10 @@ namespace JonUtility.WPF
                 var offset = gradientStop.Offset;
             }
         }
-
+        
         // bgra32
         [SecurityCritical]
         private void DrawRectangleSolidColorBrush(SolidColorBrush brush, Int32Rect rect)
-        {
-            var brushColor = brush.Color;
-            int color = BitConverter.ToInt32(new byte[4] {brushColor.B, brushColor.G, brushColor.R, brushColor.A}, 0);
-
-            int drawLeft = (this.PixelWidth * rect.Y) + rect.X;
-            int imageStride = rect.Width;
-            int count = rect.Width * rect.Height;
-            int distance = this.PixelWidth - rect.Width;
-
-            unsafe
-            {
-                int* bufferStart = (int*)this.BackBuffer + drawLeft;
-                int* buffer = bufferStart;
-                int widthEnd = rect.X + rect.Width;
-                int heightEnd = rect.Y + rect.Height;
-
-                for (int r = rect.X; r < widthEnd; r++)
-                {
-                    for (int c = rect.Y; c < heightEnd; c++)
-                    {
-                        *buffer = color;
-                        buffer++;
-                    }
-
-                    buffer += distance;
-                }
-            }
-        }
-
-        // bgra32
-        [SecurityCritical]
-        private void DrawRectangleSolidColorBrush2(SolidColorBrush brush, Int32Rect rect)
         {
             var brushToUse = brush;
             if (brush == null)
@@ -310,8 +278,6 @@ namespace JonUtility.WPF
                             }
                             else
                             {
-                                // displayColor = sourceColor × alpha / 255 + backgroundColor × (255-alpha) / 255
-
                                 float srcA = 1.0f / 255f * tempBuffer[3];
                                 float outA = (srcA + (dstA - dstA * srcA));
 

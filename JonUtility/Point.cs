@@ -178,5 +178,5 @@ namespace JonUtility
         {
             return this.X + ", " + this.Y;
         }
-    }
+    } 
 }

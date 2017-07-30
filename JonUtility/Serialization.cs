@@ -25,10 +25,59 @@ namespace JonUtility
     /// </summary>
     public static class Serialization
     {
+        //private static Dictionary<>
+
         public enum DataContractKind
         {
             Xml = 0,
             Json = 1
+        }
+
+        public static string SerializeToJson(object obj, bool indented = false)
+        {
+            var options = new JsonSerializerSettings();
+            options.Formatting = indented ? Formatting.Indented : Formatting.None;
+
+            return Newtonsoft.Json.JsonConvert.SerializeObject(obj, options);
+        }
+
+        public static T DeserializeJson<T>(string json)
+        {
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(json);
+        }
+
+        public static object DeserializeJson(string json, Type type)
+        {
+            return Newtonsoft.Json.JsonConvert.DeserializeObject(json, type);
+        }
+
+        public static void AssignObjectFromOther(object instanceToAssign, object readFromInstance)
+        {
+            var type = instanceToAssign.GetType();
+            _AssignObjectFromOther(type, instanceToAssign, readFromInstance);
+        }
+
+        public static void AssignObjectFromOther<T>(T instanceToAssign, T readFromInstance)
+        {
+            var type = typeof(T);
+            _AssignObjectFromOther(type, instanceToAssign, readFromInstance);
+        }
+
+        private static void _AssignObjectFromOther(Type type, object instanceToAssign, object readFromInstance)
+        {
+            var properties = type
+                .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.CanWrite && p.CanRead)
+                .ToArray();
+
+            foreach (var prop in properties)
+            {
+                try
+                {
+                    prop.SetValue(instanceToAssign, prop.GetValue(readFromInstance));
+                }
+                catch { }     
+            }
         }
 
         public static byte[] SerializeLegacyObject(object objectToSerialize, DataContractKind dataContractKind,

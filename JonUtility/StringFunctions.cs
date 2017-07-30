@@ -1,10 +1,45 @@
 namespace JonUtility
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
+    using System.IO;
+    using System.Text.RegularExpressions;
+
+    public class LevenshteinComparer : IComparer<string>
+    {
+        public int Compare(string x, string y)
+        {
+            return MathFunctions.LevenshteinDistance(x, y);
+        }
+
+        public static LevenshteinComparer Create()
+        {
+            return new LevenshteinComparer();
+        }
+    }
 
     public static class StringFunctions
     {
+        private static readonly string illegalFileCharsPattern = "[" + Regex.Escape(new string(Path.GetInvalidFileNameChars()) + new string(Path.GetInvalidPathChars())) + "]";
+        public static string StripIllegalFileChars(string text)
+        {
+            return Regex.Replace(text, illegalFileCharsPattern, "");
+        }
+
+        public static int RegexParseInteger(string input, string pattern)
+        {
+            var num = Regex.Match(input, pattern);
+            if (num != null && num.Groups.Count > 1)
+            {
+                return Int32.Parse(num.Groups[1].Value);
+            }
+            else
+            {
+                return -1;
+            }
+        }
+
         public static string GetSubscriptString(int number)
         {
             if (number < 10)
@@ -69,6 +104,33 @@ namespace JonUtility
             }
             return Math.Round((decimal)bytes / PetabyteAmount, decimalDigits).ToString(padding) +
                    (!fullUnitName ? " PB" : " Petabytes");
+        }
+
+        /// <summary>
+        ///     Prefixes the text with either 'a' or 'an' (or 'A' or 'An' if capitalization is specificed) and a space,
+        ///     depending on the first letter of the text.
+        /// </summary>
+        /// <param name="text">The text to prefix.</param>
+        /// <param name="capitalizeA">true to capitalize 'a' or 'an'; otherwise, 'a' or 'an' are used in lowercase.</param>
+        /// <returns>The original text prefixed by either 'a' or 'an' (or 'A' or 'An' if capitalization is specificed) and a space.</returns>
+        public static string AorAn(string text, bool capitalizeA = false)
+        {
+            var prefix = capitalizeA ? 'A' : 'a';
+
+            if (String.IsNullOrWhiteSpace(text))
+            {
+                return prefix + " ";
+            }
+
+            var firstChar = Char.ToUpper(text[0]);
+            if (firstChar == 'A' || firstChar == 'E' || firstChar == 'I' || firstChar == 'O' || firstChar == 'U')
+            {
+                return prefix + "n " + text;
+            }
+            else
+            {
+                return prefix + " " + text;
+            }
         }
     }
 }
